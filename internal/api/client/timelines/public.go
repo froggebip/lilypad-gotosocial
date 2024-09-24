@@ -119,6 +119,8 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 		authed, err = oauth.Authed(c, true, true, true, true)
 	}
 
+	// err = gtserror.New("public timeline disabled on this instance") // sirocyl - disable public timeline by force
+
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -143,6 +145,9 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 	}
 
 	local, errWithCode := apiutil.ParseLocal(c.Query(apiutil.LocalKey), false)
+	if !local {
+		errWithCode = gtserror.NewErrorUnauthorized(gtserror.New("Federated timeline disabled on this instance")) // froggebip - disable federated timeline only
+	}
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
